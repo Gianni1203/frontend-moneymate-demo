@@ -1,0 +1,65 @@
+name: Deploy demo to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write # 寫入 ci-artifacts 分支（建置紀錄，方便除錯）
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install
+        run: npm install --no-audit --no-fund 2>&1 | tee install.log
+
+      - name: Build static site (nuxt generate)
+        run: npx nuxt generate 2>&1 | tee build.log
+        env:
+          NITRO_PRESET: github_pages
+          NUXT_APP_BASE_URL: /${{ github.event.repository.name }}/
+          NUXT_PUBLIC_API_MODE: mock
+
+      # 把建置紀錄與產出推到 ci-artifacts 分支，讓沒有 Actions 權限的人（或 AI 助手）也能看到錯誤訊息
+      - name: Publish CI logs to ci-artifacts branch
+        if: always()
+        run: |
+          mkdir -p /tmp/ci
+          cp install.log build.log /tmp/ci/ 2>/dev/null || true
+          if [ -d .output/public ]; then cp -r .output/public /tmp/ci/public; fi
+          cd /tmp/ci
+          echo "${{ github.sha }} ${{ job.status }}" > STATUS
+          git init -q -b ci-artifacts
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -qm "CI artifacts for ${{ github.sha }}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-artifacts
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .output/public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
