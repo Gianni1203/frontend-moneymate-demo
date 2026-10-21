@@ -8,7 +8,9 @@ const PUBLIC = ['/login', '/register']
 
 export default defineNuxtRouteMiddleware(async (to) => {
   const { token, me, fetchMe } = useAuth()
-  const isPublic = PUBLIC.includes(to.path)
+  // GitHub Pages 會把 /register 轉成 /register/，比對前先去掉結尾斜線
+  const path = to.path.length > 1 ? to.path.replace(/\/+$/, '') : to.path
+  const isPublic = PUBLIC.includes(path)
 
   if (!token.value) return isPublic ? undefined : navigateTo('/login')
 
@@ -20,6 +22,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
     }
   }
   if (isPublic) return navigateTo('/')
-  if (!me.value!.hasCompletedOnboarding && to.path !== '/onboarding') return navigateTo('/onboarding')
-  if (me.value!.hasCompletedOnboarding && to.path === '/onboarding') return navigateTo('/')
+  if (!me.value!.hasCompletedOnboarding && path !== '/onboarding') return navigateTo('/onboarding')
+  if (me.value!.hasCompletedOnboarding && path === '/onboarding') return navigateTo('/')
 })

@@ -8,7 +8,6 @@ import { formatMoney, formatWan, toCents } from '~/lib/money'
 import type { DashboardSummary } from '~/types/api'
 
 const api = useApi()
-const quick = useQuickAdd()
 const { displayName } = useAuth()
 
 const month = ref(monthOf(todayTaipei()))
@@ -105,11 +104,11 @@ const greeting = computed(() => {
           </div>
           <div v-if="unavailable('monthly')" class="py-6 text-center text-sm text-slate-400">準備中</div>
           <div v-else class="mt-3 grid grid-cols-3 gap-3">
-            <div><p class="text-xs text-slate-500">收入</p><p class="num text-xl font-bold text-emerald-700">{{ formatMoney(d.income) }}</p></div>
-            <div><p class="text-xs text-slate-500">支出</p><p class="num text-xl font-bold">{{ formatMoney(d.expense) }}</p></div>
+            <div><p class="text-xs text-slate-500">收入</p><p class="num text-base font-bold text-emerald-700 sm:text-xl">{{ formatMoney(d.income) }}</p></div>
+            <div><p class="text-xs text-slate-500">支出</p><p class="num text-base font-bold sm:text-xl">{{ formatMoney(d.expense) }}</p></div>
             <div>
               <p class="text-xs text-slate-500">儲蓄率</p>
-              <p class="num text-xl font-bold" :class="(d.savingsRate ?? 0) < 0 ? 'text-rose-600' : ''">{{ d.savingsRate === null ? '—' : `${d.savingsRate}%` }}</p>
+              <p class="num text-base font-bold sm:text-xl" :class="(d.savingsRate ?? 0) < 0 ? 'text-rose-600' : ''">{{ d.savingsRate === null ? '—' : `${d.savingsRate}%` }}</p>
             </div>
           </div>
           <p class="mt-2 text-xs text-slate-400">轉帳、繳卡費不算收支；未來日期的交易不算</p>
@@ -167,6 +166,5 @@ const greeting = computed(() => {
     </StateView>
 
     <div class="h-4" />
-    <button class="sr-only" @click="quick.open()">快速記帳</button>
   </div>
 </template>
