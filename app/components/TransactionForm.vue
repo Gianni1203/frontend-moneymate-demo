@@ -195,8 +195,13 @@ const summaryText = computed(() => {
 </script>
 
 <template>
+  <div v-if="!accounts.data.value || !categories.data.value" class="space-y-3 py-2" aria-busy="true">
+    <div class="h-10 animate-pulse rounded-xl bg-slate-100" />
+    <div class="h-16 animate-pulse rounded-xl bg-slate-100" />
+    <div class="h-24 animate-pulse rounded-xl bg-slate-100" />
+  </div>
   <!-- 還沒有可用帳戶：先引導建立（AC-21） -->
-  <div v-if="!accounts.loading.value && usableAccounts.length === 0" class="py-6 text-center">
+  <div v-else-if="usableAccounts.length === 0" class="py-6 text-center">
     <p class="text-3xl">🏦</p>
     <p class="mt-2 font-semibold text-slate-800">先建立一個帳戶，才能開始記帳</p>
     <p class="mt-1 text-sm text-slate-500">例如「現金錢包」或你的薪轉帳戶</p>
