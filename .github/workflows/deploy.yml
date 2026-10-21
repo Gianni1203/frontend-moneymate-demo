@@ -17,6 +17,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash # bash -eo pipefail：建置失敗時，即使接了 tee 也會讓這一步失敗
     steps:
       - uses: actions/checkout@v4
 

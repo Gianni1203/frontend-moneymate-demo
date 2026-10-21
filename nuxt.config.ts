@@ -13,8 +13,8 @@ export default defineNuxtConfig({
   },
 
   app: {
-    // GitHub Pages 會在部署時用環境變數 NUXT_APP_BASE_URL=/frontend-moneymate-demo/ 覆蓋
-    baseURL: '/',
+    // GitHub Pages 部署時用環境變數 NUXT_APP_BASE_URL=/frontend-moneymate-demo/（建置時就要讀到，不能寫死）
+    baseURL: process.env.NUXT_APP_BASE_URL || '/',
     head: {
       title: 'Money Mate',
       htmlAttrs: { lang: 'zh-Hant-TW' },
