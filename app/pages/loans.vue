@@ -7,14 +7,14 @@
 import { errorText } from '~/lib/api-error'
 import { daysSince, formatDate } from '~/lib/date'
 import { formatMoney } from '~/lib/money'
-import type { DashboardSummary, Loan } from '~/types/api'
+import type { DashboardSummary, ListResponse, Loan } from '~/types/api'
 
 const api = useApi()
 const toast = useToast()
 const { confirm } = useConfirm()
 const { bump } = useDataVersion()
 
-const loans = useResource(() => api.get<Loan[]>('/loans'))
+const loans = useResource(() => api.get<ListResponse<Loan>>('/loans').then((r) => r.items))
 const summary = useResource(() => api.get<DashboardSummary>('/dashboard/summary'))
 const sorted = computed(() => [...(loans.data.value ?? [])].sort((a, b) => (a.status === b.status ? 0 : a.status === 'active' ? -1 : 1)))
 

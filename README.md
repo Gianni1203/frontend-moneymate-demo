@@ -82,15 +82,23 @@ NUXT_PUBLIC_API_BASE=https://<後端網址>/api/v1
 ### 跟 PRD 對齊的重點
 
 - API 欄位 camelCase、金額是字串（`"1234.00"`）、日期 `YYYY-MM-DD`；**前端不自己算餘額或合計**，數字都來自 API
+- 不分頁的列表回 `{ items }`、交易列表回 `{ items, page, pageSize, total }`
 - 錯誤依 `code` 顯示中文（`app/lib/api-error.ts`），之後以 E 的 `docs/error-codes.md` 為準
 - 收到 401 自動登出回登入頁；token 存 `localStorage`；不使用 `v-html`
 - 手機寬度可操作；快速記帳、帳戶、帳單、貸款表單有草稿暫存
 
-## 待跟組員確認
+## 跟後端對齊的結果
 
-- **C**：刪除帳戶時「加回估計值」的參數名稱（PRD 沒寫，目前暫用 `DELETE /accounts/:id?addBackToEstimate=true`）
-- **C**：快速記帳「填好金額後點分類就直接存」這個互動是否 OK（PRD 要求 2 次操作內完成）
-- **E**：錯誤代碼的完整清單（目前前端先列了一版，見 `app/lib/api-error.ts`）
+| 項目 | 結論 |
+|---|---|
+| 不分頁的列表 | 一律包一層 `{ items: [...] }`（E 的統一規則）：`GET /accounts`、`/categories`、`/loans`、`/bills` |
+| 刪除帳戶時加回估計值 | `DELETE /accounts/:id?addBackToEstimate=true`；沒帶或 `false` 就不加回（C 確認） |
+| 快速記帳「填好金額後點分類就直接存」 | OK（C 確認）；前端一律帶上次使用的 `accountId` 與 `transactionDate` |
+| 交易列表篩選參數 | `dateFrom`、`dateTo`、`transactionType`、`categoryId`、`accountId`、`page`、`pageSize` |
+
+### 還沒定的
+
+- **E**：錯誤代碼的完整清單（前端先列了一版，見 `app/lib/api-error.ts`）
 - **A**：共用版型（側欄、手機底部導覽、右下角＋）與整體視覺風格
 
 ## 部署

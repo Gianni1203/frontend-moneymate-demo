@@ -330,13 +330,14 @@ function goalProgress(ctx: Ctx): GoalProgress {
 // ======================================================================
 const ACCOUNT_TYPES = ['cash', 'bank', 'investment', 'credit_card'] as const
 
-function listAccounts(ctx: Ctx): Account[] {
+function listAccounts(ctx: Ctx): { items: Account[] } {
   const { bal } = calc(ctx.db, ctx.userId, ctx.today)
   const includeInactive = ctx.query.includeInactive === true || ctx.query.includeInactive === 'true'
-  return ctx.db.accounts
+  const items = ctx.db.accounts
     .filter((a) => a.userId === ctx.userId && (includeInactive || a.isActive))
     .sort((a, b) => Number(a.isEstimate) - Number(b.isEstimate) || a.createdAt.localeCompare(b.createdAt))
     .map((a) => accountOut(ctx.db, a, bal))
+  return { items }
 }
 
 function createAccount(ctx: Ctx): Account {
@@ -408,7 +409,7 @@ function deleteAccount(ctx: Ctx) {
     ctx.db.transactions.some((t) => t.accountId === a.id || t.toAccountId === a.id) ||
     ctx.db.bills.some((x) => x.accountId === a.id)
   if (used) throw conflict('ACCOUNT_IN_USE', '有交易或被帳單使用，請改用停用')
-  // ⚠️ PRD 沒定義「加回估計值」的參數名稱，這裡暫用 query addBackToEstimate=true，需跟 C 確認
+  // 已跟 C 確認：DELETE /accounts/:id?addBackToEstimate=true；沒帶或 false 就不加回
   const addBack = ctx.query.addBackToEstimate === true || ctx.query.addBackToEstimate === 'true'
   if (addBack && a.deductedFromEstimate) {
     const est = estimateAccount(ctx)
@@ -457,9 +458,10 @@ function listTransactions(ctx: Ctx): Paginated<Transaction> {
   const pageSize = Math.min(100, Math.max(1, Number(q.pageSize) || 20))
   const items = ctx.db.transactions
     .filter((t) => t.userId === ctx.userId)
-    .filter((t) => !q.from || t.transactionDate >= String(q.from))
-    .filter((t) => !q.to || t.transactionDate <= String(q.to))
-    .filter((t) => !q.type || t.transactionType === q.type)
+    // 篩選參數名稱與 C 的後端一致：dateFrom、dateTo、transactionType
+    .filter((t) => !q.dateFrom || t.transactionDate >= String(q.dateFrom))
+    .filter((t) => !q.dateTo || t.transactionDate <= String(q.dateTo))
+    .filter((t) => !q.transactionType || t.transactionType === q.transactionType)
     .filter((t) => !q.categoryId || t.categoryId === q.categoryId)
     .filter((t) => !q.accountId || t.accountId === q.accountId || t.toAccountId === q.accountId)
     .sort((a, b) => b.transactionDate.localeCompare(a.transactionDate) || b.createdAt.localeCompare(a.createdAt))
@@ -786,19 +788,19 @@ const routes: Route[] = [
   ['GET', new RegExp(`^/accounts/${ID}$`), (c) => accountOut(c.db, ownAccount(c, c.params[0], 'path'), calc(c.db, c.userId, c.today).bal)],
   ['PATCH', new RegExp(`^/accounts/${ID}$`), patchAccount, { write: true }],
   ['DELETE', new RegExp(`^/accounts/${ID}$`), deleteAccount, { write: true }],
-  ['GET', /^\/categories$/, (c): Category[] => CATEGORIES.filter((x) => !c.query.type || x.type === c.query.type).sort((a, b) => a.sortOrder - b.sortOrder)],
+  ['GET', /^\/categories$/, (c): { items: Category[] } => ({ items: CATEGORIES.filter((x) => !c.query.type || x.type === c.query.type).sort((a, b) => a.sortOrder - b.sortOrder) })],
   ['GET', /^\/transactions$/, listTransactions],
   ['POST', /^\/transactions$/, (c) => { const t = buildTx(c, c.body); c.db.transactions.push(t); return txOut(t) }, { write: true }],
   ['GET', new RegExp(`^/transactions/${ID}$`), (c) => txOut(ownTx(c))],
   ['PATCH', new RegExp(`^/transactions/${ID}$`), patchTransaction, { write: true }],
   ['DELETE', new RegExp(`^/transactions/${ID}$`), deleteTransaction, { write: true }],
   ['GET', /^\/loans\/payment-preview$/, paymentPreview],
-  ['GET', /^\/loans$/, (c) => c.db.loans.filter((l) => l.userId === c.userId).sort((a, b) => a.createdAt.localeCompare(b.createdAt)).map(loanOut)],
+  ['GET', /^\/loans$/, (c) => ({ items: c.db.loans.filter((l) => l.userId === c.userId).sort((a, b) => a.createdAt.localeCompare(b.createdAt)).map(loanOut) })],
   ['POST', /^\/loans$/, (c) => { const l = buildLoan(c, c.body); c.db.loans.push(l); return loanOut(l) }, { write: true }],
   ['GET', new RegExp(`^/loans/${ID}$`), (c) => loanOut(ownLoan(c))],
   ['PATCH', new RegExp(`^/loans/${ID}$`), patchLoan, { write: true }],
   ['DELETE', new RegExp(`^/loans/${ID}$`), (c) => { const l = ownLoan(c); c.db.loans = c.db.loans.filter((x) => x.id !== l.id); return null }, { write: true }],
-  ['GET', /^\/bills$/, (c) => c.db.bills.filter((b) => b.userId === c.userId).sort((a, b) => a.dueDate.localeCompare(b.dueDate)).map(billOut)],
+  ['GET', /^\/bills$/, (c) => ({ items: c.db.bills.filter((b) => b.userId === c.userId).sort((a, b) => a.dueDate.localeCompare(b.dueDate)).map(billOut) })],
   ['POST', /^\/bills$/, createBill, { write: true }],
   ['GET', new RegExp(`^/bills/${ID}$`), (c) => billOut(ownBill(c))],
   ['PATCH', new RegExp(`^/bills/${ID}$`), patchBill, { write: true }],

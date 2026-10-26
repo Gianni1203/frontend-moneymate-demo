@@ -86,6 +86,11 @@ export interface TransactionBody {
   note?: string | null
 }
 
+/** 不分頁的列表也包一層 items（E 的後端統一規則）：GET /accounts、/categories、/loans、/bills */
+export interface ListResponse<T> {
+  items: T[]
+}
+
 export interface Paginated<T> {
   items: T[]
   page: number

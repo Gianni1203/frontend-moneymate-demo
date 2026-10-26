@@ -7,7 +7,7 @@
  */
 import { errorText } from '~/lib/api-error'
 import { formatMoney, toCents } from '~/lib/money'
-import type { Account, DashboardSummary } from '~/types/api'
+import type { Account, DashboardSummary, ListResponse } from '~/types/api'
 import { ACCOUNT_TYPE_ICON, ACCOUNT_TYPE_LABEL } from '~/utils/labels'
 
 const api = useApi()
@@ -19,7 +19,7 @@ const route = useRoute()
 const router = useRouter()
 
 const showInactive = ref(false)
-const list = useResource(() => api.get<Account[]>('/accounts', { includeInactive: true }))
+const list = useResource(() => api.get<ListResponse<Account>>('/accounts', { includeInactive: true }).then((r) => r.items))
 const summary = useResource(() => api.get<DashboardSummary>('/dashboard/summary'))
 
 const visible = computed(() => (list.data.value ?? []).filter((a) => showInactive.value || a.isActive))
@@ -103,7 +103,7 @@ async function remove(a: Account) {
       cancelText: '不用加回',
     })
   }
-  // ⚠️ 加回估計值的參數名稱 PRD 沒寫，暫用 addBackToEstimate，需跟 C 確認
+  // 已跟 C 確認：勾「加回」才帶 addBackToEstimate=true，否則不帶
   await run(a.id, () => api.del(`/accounts/${a.id}`, { addBackToEstimate: addBack || undefined }), addBack ? '已刪除，並加回估計值' : '已刪除')
 }
 

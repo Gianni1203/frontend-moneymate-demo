@@ -17,7 +17,8 @@ const { bump } = useDataVersion()
 const quick = useQuickAdd()
 const { accounts, categories, accountName, categoryName } = useLookups()
 
-const filters = ref({ from: '', to: '', type: '' as '' | TransactionType, categoryId: '', accountId: '' })
+// 參數名稱與 C 的後端一致：dateFrom、dateTo、transactionType
+const filters = ref({ dateFrom: '', dateTo: '', transactionType: '' as '' | TransactionType, categoryId: '', accountId: '' })
 const page = ref(1)
 const PAGE_SIZE = 20
 const today = todayTaipei()
@@ -28,7 +29,7 @@ const result = useResource(
 )
 watch(filters, () => (page.value = 1), { deep: true })
 const pages = computed(() => Math.max(1, Math.ceil((result.data.value?.total ?? 0) / PAGE_SIZE)))
-const filterCategories = computed(() => (categories.data.value ?? []).filter((c) => !filters.value.type || c.type === filters.value.type))
+const filterCategories = computed(() => (categories.data.value ?? []).filter((c) => !filters.value.transactionType || c.type === filters.value.transactionType))
 const hasFilter = computed(() => Object.values(filters.value).some(Boolean))
 const categoryCode = (id: string | null) => (categories.data.value ?? []).find((c) => c.id === id)?.code ?? ''
 
@@ -64,10 +65,10 @@ function amountClass(t: Transaction) {
 
     <!-- 篩選 -->
     <div class="card mb-4 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-5">
-      <AppField label="起日" for="f-from"><input id="f-from" v-model="filters.from" type="date" class="field-input"></AppField>
-      <AppField label="迄日" for="f-to"><input id="f-to" v-model="filters.to" type="date" class="field-input"></AppField>
+      <AppField label="起日" for="f-from"><input id="f-from" v-model="filters.dateFrom" type="date" class="field-input"></AppField>
+      <AppField label="迄日" for="f-to"><input id="f-to" v-model="filters.dateTo" type="date" class="field-input"></AppField>
       <AppField label="類型" for="f-type">
-        <select id="f-type" v-model="filters.type" class="field-input" @change="filters.categoryId = ''">
+        <select id="f-type" v-model="filters.transactionType" class="field-input" @change="filters.categoryId = ''">
           <option value="">全部</option>
           <option value="income">收入</option>
           <option value="expense">支出</option>
@@ -75,7 +76,7 @@ function amountClass(t: Transaction) {
         </select>
       </AppField>
       <AppField label="分類" for="f-cat">
-        <select id="f-cat" v-model="filters.categoryId" class="field-input" :disabled="filters.type === 'transfer'">
+        <select id="f-cat" v-model="filters.categoryId" class="field-input" :disabled="filters.transactionType === 'transfer'">
           <option value="">全部</option>
           <option v-for="c in filterCategories" :key="c.id" :value="c.id">{{ c.name }}</option>
         </select>
@@ -87,7 +88,7 @@ function amountClass(t: Transaction) {
         </select>
       </AppField>
       <div v-if="hasFilter" class="sm:col-span-2 lg:col-span-5">
-        <button class="text-sm font-semibold text-brand-700 hover:underline" @click="filters = { from: '', to: '', type: '', categoryId: '', accountId: '' }">清除篩選</button>
+        <button class="text-sm font-semibold text-brand-700 hover:underline" @click="filters = { dateFrom: '', dateTo: '', transactionType: '', categoryId: '', accountId: '' }">清除篩選</button>
       </div>
     </div>
 

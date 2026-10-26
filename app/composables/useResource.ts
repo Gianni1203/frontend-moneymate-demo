@@ -1,5 +1,5 @@
 import { errorText } from '~/lib/api-error'
-import type { Account, Category } from '~/types/api'
+import type { Account, Category, ListResponse } from '~/types/api'
 
 /**
  * 讀取資料的共用寫法：loading / error / data / reload。
@@ -32,8 +32,8 @@ export function useResource<T>(loader: () => Promise<T>, opts: { immediate?: boo
 /** 帳戶與分類（多個表單都要用） */
 export function useLookups() {
   const api = useApi()
-  const accounts = useResource(() => api.get<Account[]>('/accounts', { includeInactive: true }))
-  const categories = useResource(() => api.get<Category[]>('/categories'))
+  const accounts = useResource(() => api.get<ListResponse<Account>>('/accounts', { includeInactive: true }).then((r) => r.items))
+  const categories = useResource(() => api.get<ListResponse<Category>>('/categories').then((r) => r.items))
 
   /** 可以用來記帳的帳戶：啟用中、不是估計帳戶 */
   const usableAccounts = computed(() => (accounts.data.value ?? []).filter((a) => a.isActive && !a.isEstimate))

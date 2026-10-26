@@ -7,7 +7,7 @@
 import { errorText } from '~/lib/api-error'
 import { diffDays, formatDate, relativeDue, todayTaipei } from '~/lib/date'
 import { formatMoney, normalizeAmount, validateAmount } from '~/lib/money'
-import type { Bill } from '~/types/api'
+import type { Bill, ListResponse } from '~/types/api'
 import { CATEGORY_ICON, RECURRENCE_LABEL } from '~/utils/labels'
 
 const api = useApi()
@@ -19,7 +19,7 @@ const router = useRouter()
 const { accountName, categories, accounts } = useLookups()
 const today = todayTaipei()
 
-const bills = useResource(() => api.get<Bill[]>('/bills'))
+const bills = useResource(() => api.get<ListResponse<Bill>>('/bills').then((r) => r.items))
 const all = computed(() => bills.data.value ?? [])
 
 type Tab = 'pending' | 'paid' | 'all'
